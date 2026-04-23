@@ -14,15 +14,14 @@ let raw;
 try {
   raw = eval('(' + content + ')');
 } catch (err) {
-  console.error('Erreur de parsing du fichier source:', err);
+  console.error('Erreur de parsing:', err);
   process.exit(1);
 }
 
 const bible = { livres: [] };
 
-// Vérifier la structure
-if (!raw.Testaments || !Array.isArray(raw.Testaments)) {
-  console.error('Structure invalide : clé "Testaments" manquante ou incorrecte');
+if (!raw.Testaments) {
+  console.error('Structure invalide : pas de Testaments');
   process.exit(1);
 }
 
@@ -31,7 +30,7 @@ for (const testament of raw.Testaments) {
   if (!testament.Books) continue;
 
   for (const book of testament.Books) {
-    const bookName = book.Text;
+    let bookName = book.Text;
     if (!bookName) continue;
 
     const livre = {
@@ -41,29 +40,29 @@ for (const testament of raw.Testaments) {
       chapitres: []
     };
 
-    if (!book.Chapters) continue;
+    if (book.Chapters && Array.isArray(book.Chapters)) {
+      for (const chapter of book.Chapters) {
+        const chapterNum = chapter.ID;
+        if (!chapterNum) continue;
 
-    for (const chapter of book.Chapters) {
-      const chapterNum = chapter.ID;
-      if (!chapterNum) continue;
-
-      const versets = [];
-      if (chapter.Verses && Array.isArray(chapter.Verses)) {
-        for (const verse of chapter.Verses) {
-          if (verse.ID && verse.Text) {
-            versets.push({
-              numero: verse.ID,
-              texte: verse.Text
-            });
+        const versets = [];
+        if (chapter.Verses && Array.isArray(chapter.Verses)) {
+          for (const verse of chapter.Verses) {
+            const verseNum = verse.ID;
+            const verseText = verse.Text;
+            if (verseNum && verseText) {
+              versets.push({ numero: verseNum, texte: verseText });
+            }
           }
         }
+        if (versets.length > 0) {
+          livre.chapitres.push({ numero: chapterNum, versets });
+        } else {
+          console.warn(`⚠️ Chapitre ${chapterNum} du livre ${bookName} sans versets valides`);
+        }
       }
-      if (versets.length > 0) {
-        livre.chapitres.push({
-          numero: chapterNum,
-          versets: versets
-        });
-      }
+    } else {
+      console.warn(`⚠️ Livre ${bookName} sans chapitres`);
     }
 
     if (livre.chapitres.length > 0) {
@@ -74,7 +73,7 @@ for (const testament of raw.Testaments) {
   }
 }
 
-// Trier les livres : Ancien Testament puis Nouveau Testament
+// Trier : Ancien Testament puis Nouveau Testament
 bible.livres.sort((a, b) => {
   if (a.testament === b.testament) return a.nom.localeCompare(b.nom);
   return a.testament === 'ancien' ? -1 : 1;
