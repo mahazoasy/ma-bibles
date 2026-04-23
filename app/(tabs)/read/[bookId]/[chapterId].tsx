@@ -1,9 +1,9 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useBibleData } from '../../../src/hooks/useBibleData';
-import { useFavorites } from '../../../src/hooks/useFavorites';
-import { useLastPosition } from '../../../src/hooks/useLastPosition';
-import { useLanguage } from '../../../src/context/LanguageContext';
+import { useBibleData } from '../../../../src/hooks/useBibleData';
+import { useFavorites } from '../../../../src/hooks/useFavorites';
+import { useLastPosition } from '../../../../src/hooks/useLastPosition';
+import { useLanguage } from '../../../../src/context/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
