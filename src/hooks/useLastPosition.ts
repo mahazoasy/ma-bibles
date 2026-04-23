@@ -1,46 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LastPosition } from '../../src/types';
 
-const STORAGE_KEY = '@bible:last_position';
+export interface LastPosition {
+  bookId: string;
+  bookName: string;
+  chapterId: number;
+  timestamp: number;
+}
+
+const LAST_POSITION_KEY = '@bible:last_position';
 
 export function useLastPosition() {
   const [lastPosition, setLastPosition] = useState<LastPosition | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadPosition();
+    loadLastPosition();
   }, []);
 
-  const loadPosition = async () => {
+  const loadLastPosition = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setLastPosition(JSON.parse(stored));
-      }
+      const stored = await AsyncStorage.getItem(LAST_POSITION_KEY);
+      if (stored) setLastPosition(JSON.parse(stored));
     } catch (error) {
-      console.error(error);
+      console.error('Erreur chargement dernière position', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const savePosition = async (bookName: string, chapterId: number) => {
-    const newPos: LastPosition = {
+  const saveLastPosition = async (bookId: string, bookName: string, chapterId: number) => {
+    const position: LastPosition = {
+      bookId,
       bookName,
-      bookId: bookName,
       chapterId,
       timestamp: Date.now(),
     };
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newPos));
-      setLastPosition(newPos);
+      await AsyncStorage.setItem(LAST_POSITION_KEY, JSON.stringify(position));
+      setLastPosition(position);
     } catch (error) {
-      console.error(error);
+      console.error('Erreur sauvegarde dernière position', error);
     }
   };
 
-  const clearLastPosition = async () => {
-    await AsyncStorage.removeItem(STORAGE_KEY);
-    setLastPosition(null);
-  };
-
-  return { lastPosition, savePosition, clearLastPosition };
+  return { lastPosition, isLoading, saveLastPosition };
 }
