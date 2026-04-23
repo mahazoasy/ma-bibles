@@ -22,7 +22,7 @@ export function useBibleData() {
     for (const book of bible.livres) {
       for (const chapter of book.chapitres) {
         for (const verse of chapter.versets) {
-          if (verse.texte.toLowerCase().includes(lowerQuery)) {
+          if (verse.texte && typeof verse.texte === 'string' && verse.texte.toLowerCase().includes(lowerQuery)) {
             results.push({
               book: book.nom,
               chapter: chapter.numero,
