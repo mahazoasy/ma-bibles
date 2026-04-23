@@ -1,13 +1,29 @@
 const fs = require('fs');
 const path = require('path');
 
-// Chemin vers ton fichier source (à adapter si nécessaire)
-const sourcePath = path.join(__dirname, 'french_louis_segond_1910', 'French Louis Segond (1910).json');
-const raw = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+// Supprimer le BOM s'il existe
+function stripBOM(content) {
+  if (content.charCodeAt(0) === 0xFEFF) return content.slice(1);
+  return content;
+}
+
+// Chemin vers ton fichier source (à la racine)
+const sourcePath = path.join(__dirname, 'French Louis Segond (1910).json');
+let content = fs.readFileSync(sourcePath, 'utf8');
+content = stripBOM(content);
+
+let raw;
+try {
+  // Le fichier est du JavaScript valide, on peut l'évaluer
+  raw = eval('(' + content + ')');
+} catch (err) {
+  console.error('Erreur lors du parsing du fichier source :', err);
+  process.exit(1);
+}
 
 const bible = { livres: [] };
 
-// Table des noms français des livres (car le source a des noms anglais)
+// Table des noms français des livres
 const frenchNames = {
   Genesis: "Genèse",
   Exodus: "Exode",
@@ -85,6 +101,7 @@ const oldTestamentNames = [
   "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi"
 ];
 
+// Parcourir les livres
 for (const [engName, chapters] of Object.entries(raw)) {
   const frenchName = frenchNames[engName] || engName;
   const testament = oldTestamentNames.includes(engName) ? 'ancien' : 'nouveau';
@@ -94,6 +111,7 @@ for (const [engName, chapters] of Object.entries(raw)) {
     testament,
     chapitres: []
   };
+
   for (const [chapNum, verses] of Object.entries(chapters)) {
     const versets = [];
     for (const [verseNum, text] of Object.entries(verses)) {
@@ -104,7 +122,7 @@ for (const [engName, chapters] of Object.entries(raw)) {
   bible.livres.push(livre);
 }
 
-// Écriture dans assets/bible_fr.json
+// Écriture du fichier de sortie
 const outputPath = path.join(__dirname, 'assets', 'bible_fr.json');
 fs.writeFileSync(outputPath, JSON.stringify(bible, null, 2));
 console.log(`✅ Bible française convertie → ${outputPath}`);
