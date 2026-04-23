@@ -1,59 +1,49 @@
-import { useState, useEffect } from 'react';
-import { View, TextInput, FlatList, StyleSheet, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useBibleData } from '../../src/hooks/useBibleData';
-import { VerseItem } from '../../src/components/VerseItem';
+import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
-
-type SearchResult = { book: string; chapter: number; verse: number; text: string; reference: string };
+import { useBibleData } from '../../src/hooks/useBibleData';
+import { useLanguage } from '../../src/context/LanguageContext';
 
 export default function SearchScreen() {
-  const { searchBible, isLoading } = useBibleData();
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [filter, setFilter] = useState<'all' | 'ancien' | 'nouveau'>('all');
+  const { searchBible } = useBibleData();
   const router = useRouter();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (query.trim().length >= 2) {
-        const all = searchBible(query);
-        if (filter !== 'all') {
-          const ancientBooks = ['Genèse','Exode','Lévitique','Nombres','Deutéronome','Josué','Juges','Ruth','1 Samuel','2 Samuel','1 Rois','2 Rois','1 Chroniques','2 Chroniques','Esdras','Néhémie','Esther','Job','Psaumes','Proverbes','Ecclésiaste','Cantique','Ésaïe','Jérémie','Lamentations','Ézéchiel','Daniel','Osée','Joël','Amos','Abdias','Jonas','Michée','Nahum','Habakuk','Sophonie','Aggée','Zacharie','Malachie'];
-          const newBooks = ['Matthieu','Marc','Luc','Jean','Actes','Romains','1 Corinthiens','2 Corinthiens','Galates','Éphésiens','Philippiens','Colossiens','1 Thessaloniciens','2 Thessaloniciens','1 Timothée','2 Timothée','Tite','Philémon','Hébreux','Jacques','1 Pierre','2 Pierre','1 Jean','2 Jean','3 Jean','Jude','Apocalypse'];
-          setResults(all.filter(r => filter === 'ancien' ? ancientBooks.includes(r.book) : newBooks.includes(r.book)));
-        } else setResults(all);
-      } else setResults([]);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query, filter]);
+  const results = useMemo(() => {
+    if (query.length < 2) return [];
+    return searchBible(query);
+  }, [query]);
 
   return (
     <View style={styles.container}>
-      <TextInput style={styles.searchInput} placeholder="Rechercher un mot, une expression..." value={query} onChangeText={setQuery} />
-      <View style={styles.filterBar}>
-        {(['all','ancien','nouveau'] as const).map(f => (
-          <TouchableOpacity key={f} onPress={() => setFilter(f)} style={[styles.filterChip, filter===f && styles.filterChipActive]}>
-            <Text style={[styles.filterText, filter===f && styles.filterTextActive]}>{f==='all'?'Tous':f==='ancien'?'Ancien Testament':'Nouveau Testament'}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={t('search_placeholder')}
+        value={query}
+        onChangeText={setQuery}
+        autoCapitalize="none"
+      />
+      {results.length === 0 && query.length > 1 && <Text style={styles.noResults}>{t('no_results')}</Text>}
+      <FlatList
+        data={results}
+        keyExtractor={(item, idx) => idx.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.resultItem} onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)}>
+            <Text style={styles.resultRef}>{item.reference}</Text>
+            <Text style={styles.resultText} numberOfLines={2}>{item.text}</Text>
           </TouchableOpacity>
-        ))}
-      </View>
-      {isLoading && <ActivityIndicator size="large" color="#8b5a2b" />}
-      {results.length>0 && <Text style={styles.resultCount}>{results.length} résultat(s)</Text>}
-      <FlatList data={results} keyExtractor={(_,i)=>i.toString()} renderItem={({item}) => (
-        <VerseItem reference={`${item.book} ${item.chapter}:${item.verse}`} text={item.text} onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)} highlight={query} />
-      )} ListEmptyComponent={query.length>=2 && !isLoading ? <Text style={styles.empty}>Aucun verset trouvé</Text> : null} />
+        )}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor:'#fef7e8', padding:16 },
-  searchInput: { backgroundColor:'#fff8f0', borderRadius:30, paddingHorizontal:20, paddingVertical:12, fontSize:16, borderWidth:1, borderColor:'#ebdfc9', marginBottom:12 },
-  filterBar: { flexDirection:'row', gap:10, marginBottom:16, flexWrap:'wrap' },
-  filterChip: { paddingHorizontal:16, paddingVertical:8, borderRadius:30, backgroundColor:'#f0e4d0' },
-  filterChipActive: { backgroundColor:'#8b5a2b' },
-  filterText: { color:'#5a3e1b' },
-  filterTextActive: { color:'#fff' },
-  resultCount: { fontSize:14, color:'#8b5a2b', marginBottom:8 },
-  empty: { textAlign:'center', marginTop:40, color:'#a07a52', fontSize:16 },
+  container: { flex: 1, backgroundColor: '#fef9ef', padding: 16 },
+  input: { backgroundColor: '#fff', borderRadius: 12, padding: 12, fontSize: 16, borderWidth: 0.5, borderColor: '#e2cfbc', marginBottom: 12 },
+  noResults: { textAlign: 'center', marginTop: 20, color: '#9b7a62' },
+  resultItem: { paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: '#e2cfbc' },
+  resultRef: { fontWeight: 'bold', color: '#6b4c3b', marginBottom: 4 },
+  resultText: { fontSize: 15, color: '#2c1e16' },
 });

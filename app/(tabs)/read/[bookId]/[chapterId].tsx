@@ -1,54 +1,104 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useBibleData } from '../../../../src/hooks/useBibleData';
-import { useFavorites } from '../../../../src/hooks/useFavorites';
-import { useLastPosition } from '../../../../src/hooks/useLastPosition';
-import { ChapterText } from '../../../../src/components/ChapterText';
-import { useEffect } from 'react';
+import { useBibleData } from '../../../src/hooks/useBibleData';
+import { useFavorites } from '../../../src/hooks/useFavorites';
+import { useLastPosition } from '../../../src/hooks/useLastPosition';
+import { useLanguage } from '../../../src/context/LanguageContext';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ChapterScreen() {
+  const { t } = useLanguage();
   const { bookId, chapterId } = useLocalSearchParams<{ bookId: string; chapterId: string }>();
   const router = useRouter();
-  const { getChapter, getMaxChapter } = useBibleData();
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const { savePosition } = useLastPosition();
-  const bookName = bookId;
-  const chapterNum = parseInt(chapterId, 10);
-  const chapter = getChapter(bookName, chapterNum);
+  const { getChapter, getBook, getMaxChapter, bible, isLoading } = useBibleData();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { saveLastPosition } = useLastPosition();
+  const [chapterData, setChapterData] = useState<any>(null);
+  const [bookInfo, setBookInfo] = useState<any>(null);
+  const [maxChapter, setMaxChapter] = useState(0);
 
-  useEffect(() => { if (bookName && !isNaN(chapterNum)) savePosition(bookName, chapterNum); }, [bookName, chapterNum]);
+  const chNum = parseInt(chapterId, 10);
 
-  if (!chapter) return <View style={styles.center}><Text>Chapitre introuvable</Text><TouchableOpacity onPress={()=>router.back()}><Text>Retour</Text></TouchableOpacity></View>;
+  useEffect(() => {
+    if (!bible || isLoading) return;
+    const book = getBook(bookId);
+    if (book) {
+      setBookInfo(book);
+      const max = getMaxChapter(bookId);
+      setMaxChapter(max);
+      const chap = getChapter(bookId, chNum);
+      setChapterData(chap);
+      saveLastPosition(bookId, book.nom, chNum);
+    } else {
+      Alert.alert(t('error'), 'Livre introuvable');
+    }
+  }, [bible, isLoading, bookId, chNum]);
 
-  const goPrev = () => { if (chapterNum>1) router.push(`/(tabs)/read/${bookName}/${chapterNum-1}`); else Alert.alert('Début du livre'); };
-  const goNext = () => { if (chapterNum < getMaxChapter(bookName)) router.push(`/(tabs)/read/${bookName}/${chapterNum+1}`); else Alert.alert('Fin du livre'); };
+  const toggleFavorite = (verseNum: number, verseText: string) => {
+    const ref = `${bookId} ${chNum}:${verseNum}`;
+    if (isFavorite(ref)) {
+      removeFavorite(ref);
+    } else {
+      addFavorite({
+        id: ref,
+        book: bookId,
+        chapter: chNum,
+        verse: verseNum,
+        text: verseText,
+        addedAt: Date.now(),
+      });
+    }
+  };
+
+  const goToPrev = () => {
+    if (chNum > 1) router.push(`/(tabs)/read/${bookId}/${chNum - 1}`);
+    else Alert.alert(t('error'), 'Début du livre');
+  };
+
+  const goToNext = () => {
+    if (chNum < maxChapter) router.push(`/(tabs)/read/${bookId}/${chNum + 1}`);
+    else Alert.alert(t('error'), 'Fin du livre');
+  };
+
+  if (isLoading || !chapterData) return <View style={styles.loading}><Text>{t('loading')}</Text></View>;
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.chapterTitle}>{bookName} {chapterNum}</Text>
-        <ChapterText chapter={chapter} onVersePress={(vNum, vText) => {
-          const ref = `${bookName} ${chapterNum}:${vNum}`;
-          if (isFavorite(ref)) removeFavorite(ref);
-          else addFavorite(bookName, chapterNum, vNum, vText);
-          Alert.alert(isFavorite(ref)?'Retiré':'Ajouté', `Verset ${isFavorite(ref)?'ôté des':'ajouté aux'} favoris`);
-        }} isFavorite={(vNum)=>isFavorite(`${bookName} ${chapterNum}:${vNum}`)} />
-      </ScrollView>
-      <View style={styles.navBar}>
-        <TouchableOpacity onPress={goPrev} style={styles.navButton}><Ionicons name="chevron-back" size={24} color="#8b5a2b" /><Text style={styles.navText}>Précédent</Text></TouchableOpacity>
-        <TouchableOpacity onPress={goNext} style={styles.navButton}><Text style={styles.navText}>Suivant</Text><Ionicons name="chevron-forward" size={24} color="#8b5a2b" /></TouchableOpacity>
+      <View style={styles.navHeader}>
+        <TouchableOpacity onPress={goToPrev}><Ionicons name="chevron-back" size={28} color="#8b5a2b" /></TouchableOpacity>
+        <Text style={styles.title}>{bookInfo?.nom} - {t('chapter')} {chNum}</Text>
+        <TouchableOpacity onPress={goToNext}><Ionicons name="chevron-forward" size={28} color="#8b5a2b" /></TouchableOpacity>
       </View>
+      <ScrollView contentContainerStyle={styles.versesContainer}>
+        {chapterData.versets.map((verse: any) => {
+          const ref = `${bookId} ${chNum}:${verse.numero}`;
+          const favorited = isFavorite(ref);
+          return (
+            <TouchableOpacity
+              key={verse.numero}
+              onLongPress={() => toggleFavorite(verse.numero, verse.texte)}
+              style={[styles.verseRow, favorited && styles.favoritedVerse]}
+            >
+              <Text style={styles.verseNumber}>{verse.numero}</Text>
+              <Text style={styles.verseText}>{verse.texte}</Text>
+              {favorited && <Ionicons name="bookmark" size={20} color="#d4a373" />}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor:'#fef7e8' },
-  scrollContent: { padding:20, paddingBottom:30 },
-  chapterTitle: { fontSize:28, fontFamily:'Georgia', fontWeight:'600', color:'#5a3e1b', textAlign:'center', marginBottom:24, borderBottomWidth:1, borderBottomColor:'#ebdfc9', paddingBottom:10 },
-  center: { flex:1, justifyContent:'center', alignItems:'center' },
-  navBar: { flexDirection:'row', justifyContent:'space-between', padding:16, borderTopWidth:1, borderTopColor:'#ebdfc9', backgroundColor:'#fff8f0' },
-  navButton: { flexDirection:'row', alignItems:'center', paddingHorizontal:16, paddingVertical:8, backgroundColor:'#f0e4d0', borderRadius:40 },
-  navText: { fontSize:16, color:'#8b5a2b', marginHorizontal:5 },
+  container: { flex: 1, backgroundColor: '#fffaf5' },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  navHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#f5ede4', borderBottomWidth: 1, borderColor: '#e2d4c8' },
+  title: { fontSize: 18, fontFamily: 'Georgia', color: '#4a2e24', fontWeight: '500' },
+  versesContainer: { padding: 16 },
+  verseRow: { flexDirection: 'row', marginBottom: 18, alignItems: 'flex-start' },
+  verseNumber: { width: 32, fontSize: 14, color: '#b28b6f', marginRight: 8, fontWeight: 'bold' },
+  verseText: { flex: 1, fontSize: 18, fontFamily: 'Georgia', color: '#2c1e16', lineHeight: 26 },
+  favoritedVerse: { backgroundColor: '#fff0e0', borderRadius: 8, padding: 8, marginHorizontal: -8 },
 });
