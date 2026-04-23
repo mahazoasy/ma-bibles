@@ -1,0 +1,77 @@
+{
+  "livres": [
+    {
+      "nom": "Genèse",
+      "abrev": "Gn",
+      "testament": "ancien",
+      "chapitres": [
+        {
+          "numero": 1,
+          "versets": [
+            { "numero": 1, "texte": "Au commencement, Dieu créa les cieux et la terre." },
+            { "numero": 2, "texte": "La terre était informe et vide : il y avait des ténèbres à la surface de l'abîme, et l'esprit de Dieu se mouvait au-dessus des eaux." },
+            { "numero": 3, "texte": "Dieu dit : Que la lumière soit ! Et la lumière fut." }
+          ]
+        },
+        {
+          "numero": 2,
+          "versets": [
+            { "numero": 1, "texte": "Ainsi furent achevés les cieux et la terre, et toute leur armée." },
+            { "numero": 2, "texte": "Dieu acheva au septième jour son œuvre, qu'il avait faite : et il se reposa au septième jour de toute son œuvre, qu'il avait faite." }
+          ]
+        }
+      ]
+    },
+    {
+      "nom": "Exode",
+      "abrev": "Ex",
+      "testament": "ancien",
+      "chapitres": [
+        {
+          "numero": 1,
+          "versets": [
+            { "numero": 1, "texte": "Voici les noms des enfants d'Israël, venus en Égypte avec Jacob." },
+            { "numero": 2, "texte": "Les enfants d'Israël furent féconds, multiplièrent, s'accrurent et devinrent très puissants." }
+          ]
+        }
+      ]
+    },
+    {
+      "nom": "Matthieu",
+      "abrev": "Mt",
+      "testament": "nouveau",
+      "chapitres": [
+        {
+          "numero": 1,
+          "versets": [
+            { "numero": 1, "texte": "Généalogie de Jésus-Christ, fils de David, fils d'Abraham." },
+            { "numero": 2, "texte": "Abraham engendra Isaac ; Isaac engendra Jacob ; Jacob engendra Juda et ses frères." }
+          ]
+        },
+        {
+          "numero": 5,
+          "versets": [
+            { "numero": 3, "texte": "Heureux les pauvres en esprit, car le royaume des cieux est à eux !" },
+            { "numero": 4, "texte": "Heureux ceux qui pleurent, car ils seront consolés !" },
+            { "numero": 5, "texte": "Heureux les débonnaires, car ils hériteront la terre !" }
+          ]
+        }
+      ]
+    },
+    {
+      "nom": "Jean",
+      "abrev": "Jn",
+      "testament": "nouveau",
+      "chapitres": [
+        {
+          "numero": 1,
+          "versets": [
+            { "numero": 1, "texte": "Au commencement était la Parole, et la Parole était avec Dieu, et la Parole était Dieu." },
+            { "numero": 2, "texte": "Elle était au commencement avec Dieu." },
+            { "numero": 3, "texte": "Toutes choses ont été faites par elle, et rien de ce qui a été fait n'a été fait sans elle." }
+          ]
+        }
+      ]
+    }
+  ]
+}

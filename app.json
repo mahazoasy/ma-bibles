@@ -2,6 +2,7 @@
   "expo": {
     "name": "ma-bibles",
     "slug": "ma-bibles",
+    "scheme": "mabible",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
