@@ -16,29 +16,36 @@ export default function FavoritesScreen() {
     ]);
   };
 
+  // Filtrer les favoris invalides (précaution)
+  const validFavorites = favorites.filter(item => item && typeof item === 'object');
+
   return (
     <View style={styles.container}>
-      {favorites.length === 0 ? (
+      {validFavorites.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>{t('no_favorites')}</Text>
           <Text style={styles.emptySub}>{t('add_favorite_hint')}</Text>
         </View>
       ) : (
         <FlatList
-          data={favorites}
-          keyExtractor={(item) => item.id}
+          data={validFavorites}
+          keyExtractor={item => String(item.id)}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)}
-              onLongPress={() => handleRemove(item.id)}
+              onPress={() => router.push(`/(tabs)/read/${String(item.book)}/${Number(item.chapter)}`)}
+              onLongPress={() => handleRemove(String(item.id))}
             >
               <View style={styles.cardHeader}>
-                <Text style={styles.reference}>{item.book} {item.chapter}:{item.verse}</Text>
+                <Text style={styles.reference}>
+                  {String(item.book)} {Number(item.chapter)}:{Number(item.verse)}
+                </Text>
                 <Ionicons name="heart" size={20} color="#d4a373" />
               </View>
-              <Text style={styles.text} numberOfLines={2}>{item.text}</Text>
-              <Text style={styles.date}>{t('added_on')} {new Date(item.addedAt).toLocaleDateString()}</Text>
+              <Text style={styles.text} numberOfLines={2}>{String(item.text)}</Text>
+              <Text style={styles.date}>
+                {t('added_on')} {new Date(Number(item.addedAt)).toLocaleDateString()}
+              </Text>
             </TouchableOpacity>
           )}
         />

@@ -9,7 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function ChapterScreen() {
   const { t } = useLanguage();
-  const { bookId, chapterId } = useLocalSearchParams<{ bookId: string; chapterId: string }>();
+  const params = useLocalSearchParams<{ bookId: string; chapterId: string }>();
+  // Sécurisation : expo-router peut retourner un tableau
+  const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId;
+  const chapterId = Array.isArray(params.chapterId) ? params.chapterId[0] : params.chapterId;
   const router = useRouter();
   const { getChapter, getBook, getMaxChapter, bible, isLoading } = useBibleData();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -25,11 +28,10 @@ export default function ChapterScreen() {
     const book = getBook(bookId);
     if (book) {
       setBookInfo(book);
-      const max = getMaxChapter(bookId);
-      setMaxChapter(max);
+      setMaxChapter(getMaxChapter(bookId));
       const chap = getChapter(bookId, chNum);
       setChapterData(chap);
-      saveLastPosition(bookId, book.nom, chNum);
+      if (saveLastPosition) saveLastPosition(bookId, book.nom, chNum);
     } else {
       Alert.alert(t('error'), 'Livre introuvable');
     }

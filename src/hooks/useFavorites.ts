@@ -16,7 +16,8 @@ export function useFavorites() {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setFavorites(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) setFavorites(parsed);
       }
     } catch (error) {
       console.error('Erreur chargement favoris', error);
@@ -34,25 +35,16 @@ export function useFavorites() {
     }
   };
 
-  const addFavorite = (book: string, chapter: number, verse: number, text: string) => {
-    const id = `${book} ${chapter}:${verse}`;
-    const exists = favorites.some(f => f.id === id);
+  // Accepte un objet Bookmark complet
+  const addFavorite = (bookmark: Bookmark) => {
+    const exists = favorites.some(f => f.id === bookmark.id);
     if (!exists) {
-      const newFavorite: Bookmark = {
-        id,
-        book,
-        chapter,
-        verse,
-        text,
-        addedAt: Date.now(),
-      };
-      saveFavorites([...favorites, newFavorite]);
+      saveFavorites([...favorites, bookmark]);
     }
   };
 
   const removeFavorite = (idOrRef: string) => {
-    const newFavorites = favorites.filter(f => f.id !== idOrRef);
-    saveFavorites(newFavorites);
+    saveFavorites(favorites.filter(f => f.id !== idOrRef));
   };
 
   const isFavorite = (verseRef: string): boolean => {
