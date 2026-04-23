@@ -47,6 +47,7 @@ const translations: Record<Language, Record<string, string>> = {
     "remove": "Supprimer",
     // Général
     "loading": "Chargement...",
+    "added_on": "Ajouté le",
     "error": "Erreur"
   },
   mg: {
@@ -77,7 +78,9 @@ const translations: Record<Language, Record<string, string>> = {
     "cancel": "Aoka",
     "remove": "Esory",
     "loading": "Entim-bary...",
-    "error": "Hadisoana"
+    "error": "Hadisoana",
+    "added_on": "Nampiana tamin'ny",
+
   }
 };
 
