@@ -15,15 +15,13 @@ export function useBibleData() {
   };
 
   const getTotalChapters = () => {
-  if (!bible) return 0;
-  let total = 0;
-  for (const book of bible.livres) {
-    total += book.chapitres.length;
-  }
-  return total;
+    if (!bible) return 0;
+    let total = 0;
+    for (const book of bible.livres) {
+      total += book.chapitres.length;
+    }
+    return total;
   };
-
-return { ..., totalChapters: getTotalChapters() };
 
   const searchBible = (query: string): Array<{ book: string; chapter: number; verse: number; text: string; reference: string }> => {
     if (!bible || query.trim().length === 0) return [];
@@ -60,5 +58,6 @@ return { ..., totalChapters: getTotalChapters() };
     getChapter,
     searchBible,
     getMaxChapter,
+    totalChapters: getTotalChapters(),
   };
 }

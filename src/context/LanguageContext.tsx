@@ -11,7 +11,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Traductions (à compléter avec tous les textes de l'app)
+// Traductions complètes
 const translations: Record<Language, Record<string, string>> = {
   fr: {
     // Onglets
@@ -30,6 +30,8 @@ const translations: Record<Language, Record<string, string>> = {
     "books_count": "Livres",
     "offline": "Sans connexion",
     "quick_access": "Accès rapide",
+    "reading_days": "Jours lus",
+    "progress": "Progression",
     // Lecture
     "chapter": "Chapitre",
     "previous": "Précédent",
@@ -39,16 +41,23 @@ const translations: Record<Language, Record<string, string>> = {
     // Recherche
     "search_placeholder": "Rechercher un mot ou une expression...",
     "no_results": "Aucun résultat",
+    "filter_all": "Tous",
+    "filter_old": "Ancien",
+    "filter_new": "Nouveau",
     // Favoris
     "no_favorites": "Aucun favori",
     "add_favorite_hint": "Appuyez longuement sur un verset dans la lecture pour l’ajouter",
     "remove_confirm": "Supprimer ce favori ?",
     "cancel": "Annuler",
     "remove": "Supprimer",
+    "added_on": "Ajouté le",
+    "all": "Tous",
+    "recent": "Récents",
+    "categories": "Catégories",
     // Général
     "loading": "Chargement...",
-    "added_on": "Ajouté le",
-    "error": "Erreur"
+    "error": "Erreur",
+    "info": "Information"
   },
   mg: {
     "home": "Fandraisana",
@@ -65,6 +74,8 @@ const translations: Record<Language, Record<string, string>> = {
     "books_count": "Boky",
     "offline": "Tsy mila tambajotra",
     "quick_access": "Fidirana haingana",
+    "reading_days": "Andro namakiana",
+    "progress": "Fandrosoana",
     "chapter": "Toko",
     "previous": "Teo aloha",
     "next": "Manaraka",
@@ -72,15 +83,21 @@ const translations: Record<Language, Record<string, string>> = {
     "remove_favorite": "Esorina amin’ny tiany",
     "search_placeholder": "Hikaroka teny...",
     "no_results": "Tsy misy valiny",
+    "filter_all": "Rehetra",
+    "filter_old": "Taloha",
+    "filter_new": "Vaovao",
     "no_favorites": "Mbola tsy misy tiany",
-    "add_favorite_hint": "Tsindrio lava ny andininy raha te-hametraka ho tiany",
+    "add_favorite_hint": "Tsindrio ela ny andininy raha te-hametraka ho tiany",
     "remove_confirm": "Hesorina ve izany tiany ?",
     "cancel": "Aoka",
     "remove": "Esory",
+    "added_on": "Nampiana tamin'ny",
+    "all": "Rehetra",
+    "recent": "Vao haingana",
+    "categories": "Sokajy",
     "loading": "Entim-bary...",
     "error": "Hadisoana",
-    "added_on": "Nampiana tamin'ny",
-
+    "info": "Fampahalalana"
   }
 };
 
