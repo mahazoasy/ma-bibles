@@ -9,10 +9,10 @@ export interface ReadingHistory {
 
 export function useReadingHistory(totalChaptersInBible: number = 1189) {
   const [history, setHistory] = useState<ReadingHistory>({});
-  const [daysRead, setDaysRead] = useState(0);
-  const [totalChaptersRead, setTotalChaptersRead] = useState(0);
-  const [progressPercent, setProgressPercent] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [daysRead, setDaysRead] = useState<number>(0);
+  const [totalChaptersRead, setTotalChaptersRead] = useState<number>(0);
+  const [progressPercent, setProgressPercent] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     loadHistory();
@@ -22,12 +22,14 @@ export function useReadingHistory(totalChaptersInBible: number = 1189) {
     try {
       const stored = await AsyncStorage.getItem(READING_HISTORY_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as ReadingHistory;
         setHistory(parsed);
         const chaptersCount = Object.keys(parsed).length;
         setTotalChaptersRead(chaptersCount);
-        // nombre de jours distincts
-        const days = new Set(Object.values(parsed).map(ts => new Date(ts).toDateString())).size;
+        // Convertir les timestamps en dates et compter les jours distincts
+        const days = new Set(
+          Object.values(parsed).map((ts: number) => new Date(ts).toDateString())
+        ).size;
         setDaysRead(days);
         const percent = totalChaptersInBible > 0 ? (chaptersCount / totalChaptersInBible) * 100 : 0;
         setProgressPercent(Math.min(100, Math.round(percent)));
@@ -45,7 +47,9 @@ export function useReadingHistory(totalChaptersInBible: number = 1189) {
       setHistory(newHistory);
       const chaptersCount = Object.keys(newHistory).length;
       setTotalChaptersRead(chaptersCount);
-      const days = new Set(Object.values(newHistory).map(ts => new Date(ts).toDateString())).size;
+      const days = new Set(
+        Object.values(newHistory).map((ts: number) => new Date(ts).toDateString())
+      ).size;
       setDaysRead(days);
       const percent = totalChaptersInBible > 0 ? (chaptersCount / totalChaptersInBible) * 100 : 0;
       setProgressPercent(Math.min(100, Math.round(percent)));

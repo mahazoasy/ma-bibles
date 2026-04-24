@@ -1,9 +1,23 @@
+import React, { useCallback } from 'react';
 import { View, Text, SectionList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
 import { useBibleData } from '../../../src/hooks/useBibleData';
 import { oldTestamentCategories, newTestamentCategories } from '../../../src/utils/bookCategories';
 import { Ionicons } from '@expo/vector-icons';
+
+// Typage des éléments de la liste
+interface BookItem {
+  nom: string;
+  abrev: string;
+  chapitres: { numero: number }[];
+  testament: 'ancien' | 'nouveau';
+}
+
+interface Section {
+  title: string;
+  data: BookItem[];
+  testament: string;
+}
 
 export default function BooksList() {
   const { bible } = useBibleData();
@@ -18,7 +32,7 @@ export default function BooksList() {
   }
 
   // Construire les sections avec catégories
-  const sections = [];
+  const sections: Section[] = [];
 
   // Ancien Testament
   const oldBooks = bible.livres.filter(b => b.testament === 'ancien');
@@ -38,7 +52,7 @@ export default function BooksList() {
     }
   }
 
-  const renderBook = useCallback(({ item }) => (
+  const renderBook = useCallback(({ item }: { item: BookItem }) => (
     <TouchableOpacity
       style={styles.bookItem}
       onPress={() => router.push(`/(tabs)/read/${item.nom}/${item.chapitres[0]?.numero || 1}`)}
@@ -54,9 +68,9 @@ export default function BooksList() {
     </TouchableOpacity>
   ), [router]);
 
-  const renderSectionHeader = useCallback(({ section: { title } }) => (
+  const renderSectionHeader = useCallback(({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
     </View>
   ), []);
 
