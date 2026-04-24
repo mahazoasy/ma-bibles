@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, SectionList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useBibleData } from '../../../src/hooks/useBibleData';
-import { oldTestamentCategories, newTestamentCategories } from '../../../src/utils/bookCategories';
+import { useLanguage } from '../../../src/context/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface BookItem {
@@ -15,54 +15,49 @@ interface BookItem {
 interface Section {
   title: string;
   data: BookItem[];
-  testament: string;
 }
 
 export default function BooksList() {
+  const { t } = useLanguage();
   const { bible } = useBibleData();
   const router = useRouter();
 
   if (!bible) {
     return (
       <View style={styles.center}>
-        <Text>Chargement...</Text>
+        <Text>{t('loading')}</Text>
       </View>
     );
   }
 
-  const sections: Section[] = [];
-
-  const oldBooks = bible.livres.filter(b => b.testament === 'ancien');
-  for (const [category, bookNames] of Object.entries(oldTestamentCategories)) {
-    const booksInCat = oldBooks.filter(b => bookNames.includes(b.nom));
-    if (booksInCat.length > 0) {
-      sections.push({ title: category, data: booksInCat, testament: 'ancien' });
-    }
-  }
-
-  const newBooks = bible.livres.filter(b => b.testament === 'nouveau');
-  for (const [category, bookNames] of Object.entries(newTestamentCategories)) {
-    const booksInCat = newBooks.filter(b => bookNames.includes(b.nom));
-    if (booksInCat.length > 0) {
-      sections.push({ title: category, data: booksInCat, testament: 'nouveau' });
-    }
-  }
+  const sections: Section[] = [
+    {
+      title: t('old_testament'),
+      data: bible.livres.filter(b => b.testament === 'ancien'),
+    },
+    {
+      title: t('new_testament'),
+      data: bible.livres.filter(b => b.testament === 'nouveau'),
+    },
+  ];
 
   const renderBook = useCallback(({ item }: { item: BookItem }) => (
     <TouchableOpacity
       style={styles.bookItem}
-      onPress={() => router.push(`/(tabs)/read/${item.abrev}`)} // Utilise l'abréviation
+      onPress={() => router.push(`/(tabs)/read/${item.abrev}`)} // navigation par abréviation
     >
       <View style={styles.bookLeft}>
         <Text style={styles.bookAbrev}>{item.abrev}</Text>
         <Text style={styles.bookName}>{item.nom}</Text>
       </View>
       <View style={styles.bookRight}>
-        <Text style={styles.bookChapters}>{item.chapitres.length} chapitres</Text>
+        <Text style={styles.bookChapters}>
+          {item.chapitres.length} {t('chapters_count')}
+        </Text>
         <Ionicons name="chevron-forward" size={20} color="#8b5a2b" />
       </View>
     </TouchableOpacity>
-  ), [router]);
+  ), [router, t]);
 
   const renderSectionHeader = useCallback(({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
