@@ -7,9 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 type TabType = 'all' | 'recent' | 'category';
 
-// Composant mémorisé pour chaque carte de favori
 const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => {
-  // Conversion explicite en primitives (sécurisé)
   const book = item?.book ? String(item.book) : '';
   const chapter = item?.chapter ? Number(item.chapter) : 0;
   const verse = item?.verse ? Number(item.verse) : 0;
@@ -43,7 +41,6 @@ export default function FavoritesScreen() {
     ]);
   }, [removeFavorite, t]);
 
-  // Filtrage selon l'onglet
   const filteredFavorites = favorites.filter(item => {
     if (activeTab === 'all') return true;
     if (activeTab === 'recent') {
@@ -56,17 +53,15 @@ export default function FavoritesScreen() {
     return true;
   });
 
-  // Tri par date récente (du plus récent au plus ancien)
   const sorted = [...filteredFavorites].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
 
   const renderFavorite = useCallback(({ item }: any) => {
-    // Conversion sécurisée pour la navigation
-    const book = String(item.book || '');
+    const bookId = String(item.book || '');
     const chapter = Number(item.chapter || 1);
     return (
       <FavoriteCard
         item={item}
-        onPress={() => router.push(`/(tabs)/read/${book}/${chapter}`)}
+        onPress={() => router.push(`/(tabs)/read/${bookId}/${chapter}`)}
         onLongPress={() => handleRemove(item.id)}
         t={t}
       />

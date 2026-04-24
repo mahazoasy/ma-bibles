@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function ChapterScreen() {
   const { t } = useLanguage();
   const params = useLocalSearchParams<{ bookId: string; chapterId: string }>();
-  const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId;
+  const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId; // abréviation unique
   const chapterId = Array.isArray(params.chapterId) ? params.chapterId[0] : params.chapterId;
   const router = useRouter();
   const { getChapter, getBook, getMaxChapter, bible, isLoading, totalChapters } = useBibleData();
@@ -73,7 +73,7 @@ export default function ChapterScreen() {
       if (!isFavorite(ref)) {
         addFavorite({
           id: ref,
-          book: bookId,
+          book: bookId,            // on stocke l'abréviation (stable)
           chapter: chNum,
           verse: verse.numero,
           text: verse.texte,
