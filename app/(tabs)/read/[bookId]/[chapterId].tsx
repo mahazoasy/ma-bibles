@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useBibleData } from '../../../../src/hooks/useBibleData';
 import { useFavorites } from '../../../../src/hooks/useFavorites';
 import { useLastPosition } from '../../../../src/hooks/useLastPosition';
-import { useReadingHistory } from '../../../../src/hooks/useReadingHistory'; 
+import { useReadingHistory } from '../../../../src/hooks/useReadingHistory';
 import { useLanguage } from '../../../../src/context/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,10 +14,10 @@ export default function ChapterScreen() {
   const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId;
   const chapterId = Array.isArray(params.chapterId) ? params.chapterId[0] : params.chapterId;
   const router = useRouter();
-  const { getChapter, getBook, getMaxChapter, bible, isLoading } = useBibleData();
+  const { getChapter, getBook, getMaxChapter, bible, isLoading, totalChapters } = useBibleData();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { saveLastPosition } = useLastPosition();
-  const { markChapterAsRead } = useReadingHistory(); // optionnel
+  const { markChapterAsRead, progressPercent, daysRead, totalChaptersRead } = useReadingHistory(totalChapters);
   const [chapterData, setChapterData] = useState<any>(null);
   const [bookInfo, setBookInfo] = useState<any>(null);
   const [maxChapter, setMaxChapter] = useState(0);
@@ -34,7 +34,8 @@ export default function ChapterScreen() {
       const chap = getChapter(bookId, chNum);
       setChapterData(chap);
       if (saveLastPosition) saveLastPosition(bookId, book.nom, chNum);
-      if (markChapterAsRead) markChapterAsRead(bookId, chNum);
+      // Marquer le chapitre comme lu
+      markChapterAsRead(bookId, chNum);
     } else {
       Alert.alert(t('error'), 'Livre introuvable');
     }

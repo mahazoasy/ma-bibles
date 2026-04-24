@@ -14,7 +14,8 @@ export default function HomeScreen() {
   const { bible, totalChapters } = useBibleData();
   const { favorites } = useFavorites();
   const { lastPosition } = useLastPosition();
-  const { daysRead, totalChaptersRead, progressPercent, loading: historyLoading } = useReadingHistory();
+  // On passe totalChapters au hook
+  const { daysRead, totalChaptersRead, progressPercent, loading: historyLoading } = useReadingHistory(totalChapters);
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; ref: string } | null>(null);
 
   useEffect(() => {
@@ -27,7 +28,8 @@ export default function HomeScreen() {
   const totalFavorites = favorites.length;
   const oldTestamentCount = bible?.livres.filter(b => b.testament === 'ancien').length || 0;
   const newTestamentCount = bible?.livres.filter(b => b.testament === 'nouveau').length || 0;
-  const progress = totalChapters ? Math.round((totalChaptersRead / totalChapters) * 100) : 0;
+  // La progression est déjà dans progressPercent, mais on peut aussi la recalculer
+  const progress = progressPercent; // ou Math.round((totalChaptersRead / totalChapters) * 100)
 
   const handleResumeReading = () => {
     if (lastPosition) {
@@ -71,7 +73,9 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.card} onPress={handleResumeReading}>
           <Text style={styles.cardTitle}>{t('resume_reading')}</Text>
           <Text style={styles.resumeBook}>{lastPosition.bookName}</Text>
-          <Text style={styles.resumeChapter}>Chapitre {lastPosition.chapterId} / {bible?.livres.find(b => b.nom === lastPosition.bookName)?.chapitres.length}</Text>
+          <Text style={styles.resumeChapter}>
+            Chapitre {lastPosition.chapterId} / {bible?.livres.find(b => b.nom === lastPosition.bookName)?.chapitres.length}
+          </Text>
           <Text style={styles.resumeHint}>{t('resume_hint')}</Text>
         </TouchableOpacity>
       )}

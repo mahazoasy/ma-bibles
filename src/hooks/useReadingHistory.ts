@@ -4,10 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const READING_HISTORY_KEY = '@bible:reading_history';
 
 export interface ReadingHistory {
-  [chapterKey: string]: number; // key: "bookId_chapterId" -> timestamp
+  [chapterKey: string]: number; // clé "bookId_chapterId" -> timestamp
 }
 
-export function useReadingHistory() {
+export function useReadingHistory(totalChaptersInBible: number = 1189) {
   const [history, setHistory] = useState<ReadingHistory>({});
   const [daysRead, setDaysRead] = useState(0);
   const [totalChaptersRead, setTotalChaptersRead] = useState(0);
@@ -24,12 +24,13 @@ export function useReadingHistory() {
       if (stored) {
         const parsed = JSON.parse(stored);
         setHistory(parsed);
-        // Calculer le nombre de jours distincts (timestamp en ms -> jour)
+        const chaptersCount = Object.keys(parsed).length;
+        setTotalChaptersRead(chaptersCount);
+        // nombre de jours distincts
         const days = new Set(Object.values(parsed).map(ts => new Date(ts).toDateString())).size;
         setDaysRead(days);
-        setTotalChaptersRead(Object.keys(parsed).length);
-        // Pour la progression, il faudrait le total des chapitres de la Bible
-        // On peut le calculer une fois (environ 1189 chapitres). On le passera depuis un contexte ou une constante.
+        const percent = totalChaptersInBible > 0 ? (chaptersCount / totalChaptersInBible) * 100 : 0;
+        setProgressPercent(Math.min(100, Math.round(percent)));
       }
     } catch (error) {
       console.error('Erreur chargement historique', error);
@@ -38,21 +39,40 @@ export function useReadingHistory() {
     }
   };
 
+  const saveHistory = async (newHistory: ReadingHistory) => {
+    try {
+      await AsyncStorage.setItem(READING_HISTORY_KEY, JSON.stringify(newHistory));
+      setHistory(newHistory);
+      const chaptersCount = Object.keys(newHistory).length;
+      setTotalChaptersRead(chaptersCount);
+      const days = new Set(Object.values(newHistory).map(ts => new Date(ts).toDateString())).size;
+      setDaysRead(days);
+      const percent = totalChaptersInBible > 0 ? (chaptersCount / totalChaptersInBible) * 100 : 0;
+      setProgressPercent(Math.min(100, Math.round(percent)));
+    } catch (error) {
+      console.error('Erreur sauvegarde historique', error);
+    }
+  };
+
   const markChapterAsRead = async (bookId: string, chapterId: number) => {
     const key = `${bookId}_${chapterId}`;
     if (!history[key]) {
       const newHistory = { ...history, [key]: Date.now() };
-      setHistory(newHistory);
-      await AsyncStorage.setItem(READING_HISTORY_KEY, JSON.stringify(newHistory));
-      // Mettre à jour les stats
-      setDaysRead(new Set(Object.values(newHistory).map(ts => new Date(ts).toDateString())).size);
-      setTotalChaptersRead(Object.keys(newHistory).length);
+      await saveHistory(newHistory);
     }
   };
 
-  const getTotalChaptersInBible = (totalChapters: number) => {
-    // À appeler depuis useBibleData pour obtenir le nombre total de chapitres
+  const isChapterRead = (bookId: string, chapterId: number): boolean => {
+    return !!history[`${bookId}_${chapterId}`];
   };
 
-  return { history, daysRead, totalChaptersRead, progressPercent, loading, markChapterAsRead };
+  return {
+    history,
+    daysRead,
+    totalChaptersRead,
+    progressPercent,
+    loading,
+    markChapterAsRead,
+    isChapterRead,
+  };
 }
