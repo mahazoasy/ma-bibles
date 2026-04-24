@@ -15,7 +15,7 @@ export default function ChaptersList() {
   const router = useRouter();
   const { t } = useLanguage();
   const { getBook } = useBibleData();
-  const book = getBook(bookId); // bookId est l'abréviation
+  const book = getBook(bookId);
 
   if (!book) {
     return (
@@ -27,17 +27,21 @@ export default function ChaptersList() {
 
   const chapters: ChapterType[] = book.chapitres;
 
+  // Filtrer les chapitres invalides (numéro nul ou undefined)
+  const validChapters = chapters.filter(ch => ch?.numero != null);
+
   const renderChapter = useCallback(({ item }: { item: ChapterType }) => {
-    const firstVerse = item.versets[0]?.texte || '';
+    const firstVerse = item.versets?.[0]?.texte || '';
     const preview = firstVerse.length > 80 ? firstVerse.substring(0, 80) + '...' : firstVerse;
+    const chapterNum = item.numero ?? 0;
 
     return (
       <TouchableOpacity
         style={styles.chapterItem}
-        onPress={() => router.push(`/(tabs)/read/${bookId}/${item.numero}`)}
+        onPress={() => router.push(`/(tabs)/read/${bookId}/${chapterNum}`)}
       >
         <View style={styles.chapterLeft}>
-          <Text style={styles.chapterNumber}>{t('chapter')} {item.numero}</Text>
+          <Text style={styles.chapterNumber}>{t('chapter')} {chapterNum}</Text>
           <Text style={styles.chapterPreview} numberOfLines={2}>{preview}</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#8b5a2b" />
@@ -49,13 +53,16 @@ export default function ChaptersList() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.bookTitle}>{book.nom}</Text>
-        <Text style={styles.chaptersCount}>{chapters.length} {t('chapters_count')}</Text>
+        <Text style={styles.chaptersCount}>{validChapters.length} {t('chapters_count')}</Text>
       </View>
       <FlatList
-        data={chapters}
-        keyExtractor={(item) => item.numero.toString()}
+        data={validChapters}
+        keyExtractor={(item) => String(item.numero ?? 'invalid')}
         renderItem={renderChapter}
         contentContainerStyle={styles.listContent}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );
