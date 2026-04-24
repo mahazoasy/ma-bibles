@@ -9,7 +9,7 @@ type TabType = 'all' | 'recent' | 'category';
 
 // Composant mémorisé pour chaque carte de favori
 const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => {
-  // Conversion explicite en primitives
+  // Conversion explicite en primitives (sécurisé)
   const book = item?.book ? String(item.book) : '';
   const chapter = item?.chapter ? Number(item.chapter) : 0;
   const verse = item?.verse ? Number(item.verse) : 0;
@@ -59,14 +59,19 @@ export default function FavoritesScreen() {
   // Tri par date récente (du plus récent au plus ancien)
   const sorted = [...filteredFavorites].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
 
-  const renderFavorite = useCallback(({ item }: any) => (
-    <FavoriteCard
-      item={item}
-      onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)}
-      onLongPress={() => handleRemove(item.id)}
-      t={t}
-    />
-  ), [router, handleRemove, t]);
+  const renderFavorite = useCallback(({ item }: any) => {
+    // Conversion sécurisée pour la navigation
+    const book = String(item.book || '');
+    const chapter = Number(item.chapter || 1);
+    return (
+      <FavoriteCard
+        item={item}
+        onPress={() => router.push(`/(tabs)/read/${book}/${chapter}`)}
+        onLongPress={() => handleRemove(item.id)}
+        t={t}
+      />
+    );
+  }, [router, handleRemove, t]);
 
   return (
     <View style={styles.container}>
