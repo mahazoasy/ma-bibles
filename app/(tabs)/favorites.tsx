@@ -1,11 +1,32 @@
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useFavorites } from '../../src/hooks/useFavorites';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 
 type TabType = 'all' | 'recent' | 'category';
+
+// Composant mémorisé pour chaque carte de favori
+const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => (
+  <TouchableOpacity
+    style={styles.card}
+    onPress={onPress}
+    onLongPress={onLongPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.cardHeader}>
+      <Text style={styles.reference}>
+        {item.book} {item.chapter}:{item.verse}
+      </Text>
+      <Ionicons name="heart" size={20} color="#d4a373" />
+    </View>
+    <Text style={styles.text} numberOfLines={2}>{item.text}</Text>
+    <Text style={styles.date}>
+      {t('added_on')} {new Date(item.addedAt).toLocaleDateString()}
+    </Text>
+  </TouchableOpacity>
+));
 
 export default function FavoritesScreen() {
   const { t } = useLanguage();
@@ -13,14 +34,14 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
-  const handleRemove = (id: string) => {
+  const handleRemove = useCallback((id: string) => {
     Alert.alert(t('remove_confirm'), '', [
       { text: t('cancel'), style: 'cancel' },
       { text: t('remove'), onPress: () => removeFavorite(id) },
     ]);
-  };
+  }, [removeFavorite, t]);
 
-  // Filtrer selon l'onglet
+  // Filtrage selon l'onglet
   const filteredFavorites = favorites.filter(item => {
     if (activeTab === 'all') return true;
     if (activeTab === 'recent') {
@@ -33,8 +54,17 @@ export default function FavoritesScreen() {
     return true;
   });
 
-  // Trier par date récente
+  // Tri par date récente (du plus récent au plus ancien)
   const sorted = [...filteredFavorites].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+  const renderFavorite = useCallback(({ item }: any) => (
+    <FavoriteCard
+      item={item}
+      onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)}
+      onLongPress={() => handleRemove(item.id)}
+      t={t}
+    />
+  ), [router, handleRemove, t]);
 
   return (
     <View style={styles.container}>
@@ -43,15 +73,23 @@ export default function FavoritesScreen() {
         <Text style={styles.headerCount}>{favorites.length} versets sauvegardés</Text>
       </View>
 
-      {/* Onglets */}
       <View style={styles.tabBar}>
-        <TouchableOpacity style={[styles.tab, activeTab === 'all' && styles.tabActive]} onPress={() => setActiveTab('all')}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'all' && styles.tabActive]}
+          onPress={() => setActiveTab('all')}
+        >
           <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>{t('all')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'recent' && styles.tabActive]} onPress={() => setActiveTab('recent')}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'recent' && styles.tabActive]}
+          onPress={() => setActiveTab('recent')}
+        >
           <Text style={[styles.tabText, activeTab === 'recent' && styles.tabTextActive]}>{t('recent')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'category' && styles.tabActive]} onPress={() => setActiveTab('category')}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'category' && styles.tabActive]}
+          onPress={() => setActiveTab('category')}
+        >
           <Text style={[styles.tabText, activeTab === 'category' && styles.tabTextActive]}>{t('categories')}</Text>
         </TouchableOpacity>
       </View>
@@ -65,24 +103,10 @@ export default function FavoritesScreen() {
         <FlatList
           data={sorted}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push(`/(tabs)/read/${String(item.book)}/${Number(item.chapter)}`)}
-              onLongPress={() => handleRemove(item.id)}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.reference}>
-                  {String(item.book)} {Number(item.chapter)}:{Number(item.verse)}
-                </Text>
-                <Ionicons name="heart" size={20} color="#d4a373" />
-              </View>
-              <Text style={styles.text} numberOfLines={2}>{String(item.text)}</Text>
-              <Text style={styles.date}>
-                {t('added_on')} {new Date(Number(item.addedAt)).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
-          )}
+          renderItem={renderFavorite}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
         />
       )}
     </View>

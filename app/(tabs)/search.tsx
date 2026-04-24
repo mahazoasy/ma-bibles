@@ -1,27 +1,89 @@
-import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useBibleData } from '../../src/hooks/useBibleData';
+import { useFavorites } from '../../src/hooks/useFavorites';
 import { useLanguage } from '../../src/context/LanguageContext';
+
+// Composant mémorisé pour chaque résultat avec surlignage
+const ResultItem = React.memo(({ item, onPress, onLongPress, query }: any) => {
+  const highlightText = (text: string, q: string) => {
+    if (!q) return text;
+    const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      part && part.toLowerCase() === q.toLowerCase() ? (
+        <Text key={i} style={styles.highlight}>{part}</Text>
+      ) : (
+        <Text key={i}>{part}</Text>
+      )
+    );
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.resultItem}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.7}
+    >
+      <Text style={styles.resultRef}>{item.reference}</Text>
+      <Text style={styles.resultText} numberOfLines={2}>
+        {highlightText(item.text, query)}
+      </Text>
+    </TouchableOpacity>
+  );
+});
 
 export default function SearchScreen() {
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [testamentFilter, setTestamentFilter] = useState<'all' | 'ancien' | 'nouveau'>('all');
   const { searchBible, bible } = useBibleData();
+  const { addFavorite, isFavorite } = useFavorites();
   const router = useRouter();
 
   const results = useMemo(() => {
     if (query.length < 2) return [];
-    let results = searchBible(query);
+    let res = searchBible(query);
     if (testamentFilter !== 'all') {
-      results = results.filter(r => {
+      res = res.filter(r => {
         const book = bible?.livres.find(b => b.nom === r.book);
         return book?.testament === testamentFilter;
       });
     }
-    return results;
-  }, [query, testamentFilter, bible]);
+    return res;
+  }, [query, testamentFilter, bible, searchBible]);
+
+  const handlePress = useCallback((item: any) => {
+    router.push(`/(tabs)/read/${item.book}/${item.chapter}`);
+  }, [router]);
+
+  const handleLongPress = useCallback((item: any) => {
+    const ref = `${item.book} ${item.chapter}:${item.verse}`;
+    if (isFavorite(ref)) {
+      Alert.alert(t('info'), t('already_favorite'));
+    } else {
+      addFavorite({
+        id: ref,
+        book: item.book,
+        chapter: item.chapter,
+        verse: item.verse,
+        text: item.text,
+        addedAt: Date.now(),
+      });
+      Alert.alert(t('success'), t('favorite_added'));
+    }
+  }, [addFavorite, isFavorite, t]);
+
+  const renderItem = useCallback(({ item }: any) => (
+    <ResultItem
+      item={item}
+      onPress={() => handlePress(item)}
+      onLongPress={() => handleLongPress(item)}
+      query={query}
+    />
+  ), [handlePress, handleLongPress, query]);
 
   return (
     <View style={styles.container}>
@@ -33,40 +95,37 @@ export default function SearchScreen() {
         autoCapitalize="none"
       />
       <View style={styles.filterRow}>
-        <TouchableOpacity style={[styles.filterChip, testamentFilter === 'all' && styles.filterActive]} onPress={() => setTestamentFilter('all')}>
+        <TouchableOpacity
+          style={[styles.filterChip, testamentFilter === 'all' && styles.filterActive]}
+          onPress={() => setTestamentFilter('all')}
+        >
           <Text style={styles.filterText}>{t('filter_all')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterChip, testamentFilter === 'ancien' && styles.filterActive]} onPress={() => setTestamentFilter('ancien')}>
+        <TouchableOpacity
+          style={[styles.filterChip, testamentFilter === 'ancien' && styles.filterActive]}
+          onPress={() => setTestamentFilter('ancien')}
+        >
           <Text style={styles.filterText}>{t('filter_old')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.filterChip, testamentFilter === 'nouveau' && styles.filterActive]} onPress={() => setTestamentFilter('nouveau')}>
+        <TouchableOpacity
+          style={[styles.filterChip, testamentFilter === 'nouveau' && styles.filterActive]}
+          onPress={() => setTestamentFilter('nouveau')}
+        >
           <Text style={styles.filterText}>{t('filter_new')}</Text>
         </TouchableOpacity>
       </View>
       {results.length === 0 && query.length > 1 && <Text style={styles.noResults}>{t('no_results')}</Text>}
       <FlatList
         data={results}
-        keyExtractor={(item, idx) => idx.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.resultItem} onPress={() => router.push(`/(tabs)/read/${item.book}/${item.chapter}`)}>
-            <Text style={styles.resultRef}>{item.reference}</Text>
-            <Text style={styles.resultText} numberOfLines={2} ellipsizeMode="tail">
-              {highlightText(item.text, query)}
-            </Text>
-          </TouchableOpacity>
-        )}
+        keyExtractor={(_, idx) => idx.toString()}
+        renderItem={renderItem}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );
 }
-
-const highlightText = (text: string, query: string) => {
-  if (!query) return text;
-  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase() ? <Text key={i} style={styles.highlight}>{part}</Text> : <Text key={i}>{part}</Text>
-  );
-};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fef9ef', padding: 16 },

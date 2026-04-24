@@ -1,5 +1,6 @@
 import { View, Text, SectionList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 import { useBibleData } from '../../../src/hooks/useBibleData';
 import { oldTestamentCategories, newTestamentCategories } from '../../../src/utils/bookCategories';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +8,14 @@ import { Ionicons } from '@expo/vector-icons';
 export default function BooksList() {
   const { bible } = useBibleData();
   const router = useRouter();
-  if (!bible) return <View style={styles.center}><Text>Chargement...</Text></View>;
+
+  if (!bible) {
+    return (
+      <View style={styles.center}>
+        <Text>Chargement...</Text>
+      </View>
+    );
+  }
 
   // Construire les sections avec catégories
   const sections = [];
@@ -30,8 +38,11 @@ export default function BooksList() {
     }
   }
 
-  const renderBook = ({ item }) => (
-    <TouchableOpacity style={styles.bookItem} onPress={() => router.push(`/(tabs)/read/${item.nom}/${item.chapitres[0]?.numero || 1}`)}>
+  const renderBook = useCallback(({ item }) => (
+    <TouchableOpacity
+      style={styles.bookItem}
+      onPress={() => router.push(`/(tabs)/read/${item.nom}/${item.chapitres[0]?.numero || 1}`)}
+    >
       <View style={styles.bookLeft}>
         <Text style={styles.bookAbrev}>{item.abrev}</Text>
         <Text style={styles.bookName}>{item.nom}</Text>
@@ -41,13 +52,13 @@ export default function BooksList() {
         <Ionicons name="chevron-forward" size={20} color="#8b5a2b" />
       </View>
     </TouchableOpacity>
-  );
+  ), [router]);
 
-  const renderSectionHeader = ({ section: { title } }) => (
+  const renderSectionHeader = useCallback(({ section: { title } }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
     </View>
-  );
+  ), []);
 
   return (
     <View style={styles.container}>
@@ -58,6 +69,9 @@ export default function BooksList() {
         renderSectionHeader={renderSectionHeader}
         contentContainerStyle={styles.listContent}
         stickySectionHeadersEnabled={false}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );

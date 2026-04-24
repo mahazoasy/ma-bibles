@@ -57,7 +57,10 @@ const translations: Record<Language, Record<string, string>> = {
     // Général
     "loading": "Chargement...",
     "error": "Erreur",
-    "info": "Information"
+    "info": "Information",
+    "already_favorite": "Déjà dans les favoris",
+    "favorite_added": "Verset ajouté aux favoris",
+    "success": "Succès"
   },
   mg: {
     "home": "Fandraisana",
@@ -97,7 +100,10 @@ const translations: Record<Language, Record<string, string>> = {
     "categories": "Sokajy",
     "loading": "Entim-bary...",
     "error": "Hadisoana",
-    "info": "Fampahalalana"
+    "info": "Fampahalalana",
+    "already_favorite": "Efa tao amin’ny tiany",
+    "favorite_added": "Andininy nampiana ho tiany",
+    "success": "Vita"
   }
 };
 
