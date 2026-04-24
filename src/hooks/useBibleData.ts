@@ -14,6 +14,17 @@ export function useBibleData() {
     return book?.chapitres.find(c => c.numero === chapterNumber);
   };
 
+  const getTotalChapters = () => {
+  if (!bible) return 0;
+  let total = 0;
+  for (const book of bible.livres) {
+    total += book.chapitres.length;
+  }
+  return total;
+  };
+
+return { ..., totalChapters: getTotalChapters() };
+
   const searchBible = (query: string): Array<{ book: string; chapter: number; verse: number; text: string; reference: string }> => {
     if (!bible || query.trim().length === 0) return [];
     const lowerQuery = query.toLowerCase();
