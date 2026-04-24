@@ -8,25 +8,27 @@ import { Ionicons } from '@expo/vector-icons';
 type TabType = 'all' | 'recent' | 'category';
 
 // Composant mémorisé pour chaque carte de favori
-const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => (
-  <TouchableOpacity
-    style={styles.card}
-    onPress={onPress}
-    onLongPress={onLongPress}
-    activeOpacity={0.7}
-  >
-    <View style={styles.cardHeader}>
-      <Text style={styles.reference}>
-        {item.book} {item.chapter}:{item.verse}
-      </Text>
-      <Ionicons name="heart" size={20} color="#d4a373" />
-    </View>
-    <Text style={styles.text} numberOfLines={2}>{item.text}</Text>
-    <Text style={styles.date}>
-      {t('added_on')} {new Date(item.addedAt).toLocaleDateString()}
-    </Text>
-  </TouchableOpacity>
-));
+const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => {
+  // Conversion explicite en primitives
+  const book = item?.book ? String(item.book) : '';
+  const chapter = item?.chapter ? Number(item.chapter) : 0;
+  const verse = item?.verse ? Number(item.verse) : 0;
+  const text = item?.text ? String(item.text) : '';
+  const addedAt = item?.addedAt ? Number(item.addedAt) : Date.now();
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} onLongPress={onLongPress} activeOpacity={0.7}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.reference}>
+          {book} {chapter}:{verse}
+        </Text>
+        <Ionicons name="heart" size={20} color="#d4a373" />
+      </View>
+      <Text style={styles.text} numberOfLines={2}>{text}</Text>
+      <Text style={styles.date}>{t('added_on')} {new Date(addedAt).toLocaleDateString()}</Text>
+    </TouchableOpacity>
+  );
+});
 
 export default function FavoritesScreen() {
   const { t } = useLanguage();

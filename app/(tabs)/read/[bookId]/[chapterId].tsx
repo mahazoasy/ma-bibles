@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useBibleData } from '../../../../src/hooks/useBibleData';
@@ -5,7 +6,6 @@ import { useFavorites } from '../../../../src/hooks/useFavorites';
 import { useLastPosition } from '../../../../src/hooks/useLastPosition';
 import { useReadingHistory } from '../../../../src/hooks/useReadingHistory';
 import { useLanguage } from '../../../../src/context/LanguageContext';
-import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ChapterScreen() {
@@ -17,11 +17,12 @@ export default function ChapterScreen() {
   const { getChapter, getBook, getMaxChapter, bible, isLoading, totalChapters } = useBibleData();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const { saveLastPosition } = useLastPosition();
-  const { markChapterAsRead, progressPercent, daysRead, totalChaptersRead } = useReadingHistory(totalChapters);
+  const { markChapterAsRead } = useReadingHistory(totalChapters);
   const [chapterData, setChapterData] = useState<any>(null);
   const [bookInfo, setBookInfo] = useState<any>(null);
   const [maxChapter, setMaxChapter] = useState(0);
   const [chapterTitle, setChapterTitle] = useState('');
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
 
   const chNum = parseInt(chapterId, 10);
 
@@ -33,8 +34,7 @@ export default function ChapterScreen() {
       setMaxChapter(getMaxChapter(bookId));
       const chap = getChapter(bookId, chNum);
       setChapterData(chap);
-      if (saveLastPosition) saveLastPosition(bookId, book.nom, chNum);
-      // Marquer le chapitre comme lu
+      saveLastPosition(bookId, book.nom, chNum);
       markChapterAsRead(bookId, chNum);
     } else {
       Alert.alert(t('error'), 'Livre introuvable');
@@ -51,6 +51,40 @@ export default function ChapterScreen() {
       }
     }
   }, [chapterData, chNum, t]);
+
+  const toggleSelection = (verseNum: number) => {
+    setSelectedVerses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(verseNum)) newSet.delete(verseNum);
+      else newSet.add(verseNum);
+      return newSet;
+    });
+  };
+
+  const addSelectedToFavorites = () => {
+    if (selectedVerses.size === 0) {
+      Alert.alert(t('info'), 'Aucun verset sélectionné');
+      return;
+    }
+    const versetsToAdd = chapterData.versets.filter((v: any) => selectedVerses.has(v.numero));
+    let addedCount = 0;
+    for (const verse of versetsToAdd) {
+      const ref = `${bookId} ${chNum}:${verse.numero}`;
+      if (!isFavorite(ref)) {
+        addFavorite({
+          id: ref,
+          book: bookId,
+          chapter: chNum,
+          verse: verse.numero,
+          text: verse.texte,
+          addedAt: Date.now(),
+        });
+        addedCount++;
+      }
+    }
+    Alert.alert(t('success'), `${addedCount} verset(s) ajouté(s) aux favoris`);
+    setSelectedVerses(new Set());
+  };
 
   const toggleFavorite = (verseNum: number, verseText: string) => {
     const ref = `${bookId} ${chNum}:${verseNum}`;
@@ -80,35 +114,48 @@ export default function ChapterScreen() {
 
   if (isLoading || !chapterData) return <View style={styles.loading}><Text>{t('loading')}</Text></View>;
 
+  const hasSelected = selectedVerses.size > 0;
+
   return (
     <View style={styles.container}>
       <View style={styles.navHeader}>
-        <TouchableOpacity onPress={goToPrev}>
-          <Ionicons name="chevron-back" size={28} color="#8b5a2b" />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={goToPrev}><Ionicons name="chevron-back" size={28} color="#8b5a2b" /></TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.bookTitle}>{bookInfo?.nom}</Text>
           {chapterTitle && <Text style={styles.chapterSubtitle}>{chapterTitle}</Text>}
           <Text style={styles.chapterProgress}>Chapitre {chNum} / {maxChapter}</Text>
         </View>
-        <TouchableOpacity onPress={goToNext}>
-          <Ionicons name="chevron-forward" size={28} color="#8b5a2b" />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={goToNext}><Ionicons name="chevron-forward" size={28} color="#8b5a2b" /></TouchableOpacity>
       </View>
+
+      {hasSelected && (
+        <TouchableOpacity style={styles.addSelectedButton} onPress={addSelectedToFavorites}>
+          <Ionicons name="heart" size={20} color="#fff" />
+          <Text style={styles.addSelectedText}>Ajouter {selectedVerses.size} verset(s) aux favoris</Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView contentContainerStyle={styles.versesContainer}>
         {chapterData.versets.map((verse: any) => {
           const ref = `${bookId} ${chNum}:${verse.numero}`;
           const favorited = isFavorite(ref);
+          const isSelected = selectedVerses.has(verse.numero);
           return (
             <TouchableOpacity
               key={verse.numero}
+              onPress={() => toggleSelection(verse.numero)}
               onLongPress={() => toggleFavorite(verse.numero, verse.texte)}
-              style={[styles.verseRow, favorited && styles.favoritedVerse]}
+              style={[
+                styles.verseRow,
+                favorited && styles.favoritedVerse,
+                isSelected && styles.selectedVerse
+              ]}
               activeOpacity={0.7}
             >
               <Text style={styles.verseNumber}>{verse.numero}</Text>
               <Text style={styles.verseText}>{verse.texte}</Text>
               {favorited && <Ionicons name="bookmark" size={20} color="#d4a373" />}
+              {isSelected && !favorited && <Ionicons name="checkbox-outline" size={20} color="#8b5a2b" />}
             </TouchableOpacity>
           );
         })}
@@ -135,8 +182,20 @@ const styles = StyleSheet.create({
   chapterSubtitle: { fontSize: 12, color: '#8b5a2b', marginTop: 2, fontStyle: 'italic' },
   chapterProgress: { fontSize: 11, color: '#b88b5a', marginTop: 2 },
   versesContainer: { padding: 16 },
-  verseRow: { flexDirection: 'row', marginBottom: 18, alignItems: 'flex-start' },
+  verseRow: { flexDirection: 'row', marginBottom: 18, alignItems: 'flex-start', paddingVertical: 4 },
   verseNumber: { width: 32, fontSize: 14, color: '#b28b6f', marginRight: 8, fontWeight: 'bold' },
   verseText: { flex: 1, fontSize: 18, fontFamily: 'Georgia', color: '#2c1e16', lineHeight: 26 },
   favoritedVerse: { backgroundColor: '#fff0e0', borderRadius: 8, padding: 8, marginHorizontal: -8 },
+  selectedVerse: { backgroundColor: '#ffe6b3', borderRadius: 8, padding: 8, marginHorizontal: -8 },
+  addSelectedButton: {
+    flexDirection: 'row',
+    backgroundColor: '#8b5a2b',
+    margin: 16,
+    padding: 12,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addSelectedText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });
