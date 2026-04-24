@@ -55,7 +55,7 @@ export default function BooksList() {
   const renderBook = useCallback(({ item }: { item: BookItem }) => (
     <TouchableOpacity
       style={styles.bookItem}
-      onPress={() => router.push(`/(tabs)/read/${item.nom}/${item.chapitres[0]?.numero || 1}`)}
+      onPress={() => router.push(`/(tabs)/read/${item.nom}`)} // redirige vers la liste des chapitres
     >
       <View style={styles.bookLeft}>
         <Text style={styles.bookAbrev}>{item.abrev}</Text>

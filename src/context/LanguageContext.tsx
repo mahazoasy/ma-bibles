@@ -60,6 +60,7 @@ const translations: Record<Language, Record<string, string>> = {
     "info": "Information",
     "already_favorite": "Déjà dans les favoris",
     "favorite_added": "Verset ajouté aux favoris",
+    "chapters_count": "chapitres",
     "success": "Succès"
   },
   mg: {
@@ -103,6 +104,7 @@ const translations: Record<Language, Record<string, string>> = {
     "info": "Fampahalalana",
     "already_favorite": "Efa tao amin’ny tiany",
     "favorite_added": "Andininy nampiana ho tiany",
+    "chapters_count": "toko", 
     "success": "Vita"
   }
 };
