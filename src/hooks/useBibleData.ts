@@ -5,12 +5,13 @@ import { Book, Chapter } from '../../src/types';
 export function useBibleData() {
   const { bible, isLoading } = useContext(BibleContext);
 
-  const getBook = (bookName: string): Book | undefined => {
-    return bible?.livres.find(b => b.nom === bookName);
+  // Permet de trouver un livre par son nom ou son abréviation
+  const getBook = (bookId: string): Book | undefined => {
+    return bible?.livres.find(b => b.abrev === bookId || b.nom === bookId);
   };
 
-  const getChapter = (bookName: string, chapterNumber: number): Chapter | undefined => {
-    const book = getBook(bookName);
+  const getChapter = (bookId: string, chapterNumber: number): Chapter | undefined => {
+    const book = getBook(bookId);
     return book?.chapitres.find(c => c.numero === chapterNumber);
   };
 
@@ -46,8 +47,8 @@ export function useBibleData() {
     return results;
   };
 
-  const getMaxChapter = (bookName: string): number => {
-    const book = getBook(bookName);
+  const getMaxChapter = (bookId: string): number => {
+    const book = getBook(bookId);
     return book ? book.chapitres.length : 0;
   };
 

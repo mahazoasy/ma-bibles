@@ -5,12 +5,17 @@ import { useBibleData } from '../../../../src/hooks/useBibleData';
 import { useLanguage } from '../../../../src/context/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
 
+interface ChapterType {
+  numero: number;
+  versets: { numero: number; texte: string }[];
+}
+
 export default function ChaptersList() {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
   const router = useRouter();
   const { t } = useLanguage();
   const { getBook } = useBibleData();
-  const book = getBook(bookId);
+  const book = getBook(bookId); // bookId est l'abréviation
 
   if (!book) {
     return (
@@ -20,19 +25,19 @@ export default function ChaptersList() {
     );
   }
 
-  const chapters = book.chapitres;
+  const chapters: ChapterType[] = book.chapitres;
 
-  const renderChapter = useCallback(({ item: chapter }) => {
-    const firstVerse = chapter.versets[0]?.texte || '';
+  const renderChapter = useCallback(({ item }: { item: ChapterType }) => {
+    const firstVerse = item.versets[0]?.texte || '';
     const preview = firstVerse.length > 80 ? firstVerse.substring(0, 80) + '...' : firstVerse;
 
     return (
       <TouchableOpacity
         style={styles.chapterItem}
-        onPress={() => router.push(`/(tabs)/read/${bookId}/${chapter.numero}`)}
+        onPress={() => router.push(`/(tabs)/read/${bookId}/${item.numero}`)}
       >
         <View style={styles.chapterLeft}>
-          <Text style={styles.chapterNumber}>{t('chapter')} {chapter.numero}</Text>
+          <Text style={styles.chapterNumber}>{t('chapter')} {item.numero}</Text>
           <Text style={styles.chapterPreview} numberOfLines={2}>{preview}</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#8b5a2b" />

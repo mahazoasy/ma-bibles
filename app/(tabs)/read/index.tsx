@@ -5,7 +5,6 @@ import { useBibleData } from '../../../src/hooks/useBibleData';
 import { oldTestamentCategories, newTestamentCategories } from '../../../src/utils/bookCategories';
 import { Ionicons } from '@expo/vector-icons';
 
-// Typage des éléments de la liste
 interface BookItem {
   nom: string;
   abrev: string;
@@ -31,10 +30,8 @@ export default function BooksList() {
     );
   }
 
-  // Construire les sections avec catégories
   const sections: Section[] = [];
 
-  // Ancien Testament
   const oldBooks = bible.livres.filter(b => b.testament === 'ancien');
   for (const [category, bookNames] of Object.entries(oldTestamentCategories)) {
     const booksInCat = oldBooks.filter(b => bookNames.includes(b.nom));
@@ -43,7 +40,6 @@ export default function BooksList() {
     }
   }
 
-  // Nouveau Testament
   const newBooks = bible.livres.filter(b => b.testament === 'nouveau');
   for (const [category, bookNames] of Object.entries(newTestamentCategories)) {
     const booksInCat = newBooks.filter(b => bookNames.includes(b.nom));
@@ -55,7 +51,7 @@ export default function BooksList() {
   const renderBook = useCallback(({ item }: { item: BookItem }) => (
     <TouchableOpacity
       style={styles.bookItem}
-      onPress={() => router.push(`/(tabs)/read/${item.nom}`)} // redirige vers la liste des chapitres
+      onPress={() => router.push(`/(tabs)/read/${item.abrev}`)} // Utilise l'abréviation
     >
       <View style={styles.bookLeft}>
         <Text style={styles.bookAbrev}>{item.abrev}</Text>
