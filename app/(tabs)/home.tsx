@@ -1,22 +1,27 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useBibleData } from '../../src/hooks/useBibleData';
 import { useFavorites } from '../../src/hooks/useFavorites';
 import { useLastPosition } from '../../src/hooks/useLastPosition';
 import { useReadingHistory } from '../../src/hooks/useReadingHistory';
 import { useLanguage } from '../../src/context/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function HomeScreen() {
   const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
   const { bible, totalChapters } = useBibleData();
-  const { favorites } = useFavorites();
+  const { favorites, reloadFavorites } = useFavorites();
   const { lastPosition } = useLastPosition();
-  // On passe totalChapters au hook
-  const { daysRead, totalChaptersRead, progressPercent, loading: historyLoading } = useReadingHistory(totalChapters);
+  const { daysRead, progressPercent } = useReadingHistory(totalChapters);
   const [verseOfDay, setVerseOfDay] = useState<{ text: string; ref: string } | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      reloadFavorites();
+    }, [reloadFavorites])
+  );
 
   useEffect(() => {
     setVerseOfDay({
@@ -28,8 +33,7 @@ export default function HomeScreen() {
   const totalFavorites = favorites.length;
   const oldTestamentCount = bible?.livres.filter(b => b.testament === 'ancien').length || 0;
   const newTestamentCount = bible?.livres.filter(b => b.testament === 'nouveau').length || 0;
-  // La progression est déjà dans progressPercent, mais on peut aussi la recalculer
-  const progress = progressPercent; // ou Math.round((totalChaptersRead / totalChapters) * 100)
+  const progress = progressPercent;
 
   const handleResumeReading = () => {
     if (lastPosition) {
@@ -39,9 +43,9 @@ export default function HomeScreen() {
     }
   };
 
-  const handleQuickAccess = (testament: 'ancien' | 'nouveau') => {
-    const firstBook = bible?.livres.find(b => b.testament === testament);
-    if (firstBook) router.push(`/(tabs)/read/${firstBook.nom}/${firstBook.chapitres[0].numero}`);
+  // Ouvrir la liste des livres (onglet Lire)
+  const handleQuickAccess = () => {
+    router.push('/(tabs)/read');
   };
 
   return (
@@ -51,7 +55,6 @@ export default function HomeScreen() {
         <Text style={styles.subtitle}>Version Louis Segond</Text>
       </View>
 
-      {/* Sélecteur de langue */}
       <View style={styles.langRow}>
         <TouchableOpacity style={[styles.langButton, language === 'fr' && styles.langActive]} onPress={() => setLanguage('fr')}>
           <Text style={styles.langText}>Français</Text>
@@ -61,14 +64,12 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Verset du jour */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{t('verse_of_day')}</Text>
         <Text style={styles.verseText}>“{verseOfDay?.text}”</Text>
         <Text style={styles.verseRef}>{verseOfDay?.ref}</Text>
       </View>
 
-      {/* Continuer la lecture */}
       {lastPosition && (
         <TouchableOpacity style={styles.card} onPress={handleResumeReading}>
           <Text style={styles.cardTitle}>{t('resume_reading')}</Text>
@@ -80,21 +81,19 @@ export default function HomeScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Accès rapide aux testaments */}
       <View style={styles.row}>
-        <TouchableOpacity style={[styles.testamentCard, { backgroundColor: '#c8a87c' }]} onPress={() => handleQuickAccess('ancien')}>
+        <TouchableOpacity style={[styles.testamentCard, { backgroundColor: '#c8a87c' }]} onPress={handleQuickAccess}>
           <Ionicons name="library-outline" size={32} color="#fff" />
           <Text style={styles.testamentTitle}>{t('old_testament')}</Text>
           <Text style={styles.testamentCount}>{oldTestamentCount} livres</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.testamentCard, { backgroundColor: '#8b5a2b' }]} onPress={() => handleQuickAccess('nouveau')}>
+        <TouchableOpacity style={[styles.testamentCard, { backgroundColor: '#8b5a2b' }]} onPress={handleQuickAccess}>
           <Ionicons name="book-outline" size={32} color="#fff" />
           <Text style={styles.testamentTitle}>{t('new_testament')}</Text>
           <Text style={styles.testamentCount}>{newTestamentCount} livres</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Statistiques */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{t('statistics')}</Text>
         <View style={styles.statsRow}>

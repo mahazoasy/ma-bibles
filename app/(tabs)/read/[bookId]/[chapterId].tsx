@@ -11,11 +11,11 @@ import { Ionicons } from '@expo/vector-icons';
 export default function ChapterScreen() {
   const { t } = useLanguage();
   const params = useLocalSearchParams<{ bookId: string; chapterId: string }>();
-  const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId; // abréviation unique
+  const bookId = Array.isArray(params.bookId) ? params.bookId[0] : params.bookId;
   const chapterId = Array.isArray(params.chapterId) ? params.chapterId[0] : params.chapterId;
   const router = useRouter();
   const { getChapter, getBook, getMaxChapter, bible, isLoading, totalChapters } = useBibleData();
-  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { addFavorite, removeFavorite, isFavorite, reloadFavorites } = useFavorites();
   const { saveLastPosition } = useLastPosition();
   const { markChapterAsRead } = useReadingHistory(totalChapters);
   const [chapterData, setChapterData] = useState<any>(null);
@@ -61,7 +61,7 @@ export default function ChapterScreen() {
     });
   };
 
-  const addSelectedToFavorites = () => {
+  const addSelectedToFavorites = async () => {
     if (selectedVerses.size === 0) {
       Alert.alert(t('info'), 'Aucun verset sélectionné');
       return;
@@ -70,28 +70,28 @@ export default function ChapterScreen() {
     let addedCount = 0;
     for (const verse of versetsToAdd) {
       const ref = `${bookId} ${chNum}:${verse.numero}`;
-      if (!isFavorite(ref)) {
-        addFavorite({
-          id: ref,
-          book: bookId,            // on stocke l'abréviation (stable)
-          chapter: chNum,
-          verse: verse.numero,
-          text: verse.texte,
-          addedAt: Date.now(),
-        });
-        addedCount++;
-      }
+      const success = await addFavorite({
+        id: ref,
+        book: bookId,
+        chapter: chNum,
+        verse: verse.numero,
+        text: verse.texte,
+        addedAt: Date.now(),
+      });
+      if (success) addedCount++;
     }
     Alert.alert(t('success'), `${addedCount} verset(s) ajouté(s) aux favoris`);
     setSelectedVerses(new Set());
+    // Forcer un rechargement global des favoris (pour l'accueil)
+    reloadFavorites();
   };
 
-  const toggleFavorite = (verseNum: number, verseText: string) => {
+  const toggleFavorite = async (verseNum: number, verseText: string) => {
     const ref = `${bookId} ${chNum}:${verseNum}`;
     if (isFavorite(ref)) {
-      removeFavorite(ref);
+      await removeFavorite(ref);
     } else {
-      addFavorite({
+      await addFavorite({
         id: ref,
         book: bookId,
         chapter: chNum,
@@ -100,6 +100,7 @@ export default function ChapterScreen() {
         addedAt: Date.now(),
       });
     }
+    reloadFavorites();
   };
 
   const goToPrev = () => {

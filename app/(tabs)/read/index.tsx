@@ -44,7 +44,7 @@ export default function BooksList() {
   const renderBook = useCallback(({ item }: { item: BookItem }) => (
     <TouchableOpacity
       style={styles.bookItem}
-      onPress={() => router.push(`/(tabs)/read/${item.abrev}`)} // navigation par abréviation
+      onPress={() => router.push(`/(tabs)/read/${item.abrev}`)}
     >
       <View style={styles.bookLeft}>
         <Text style={styles.bookAbrev}>{item.abrev}</Text>

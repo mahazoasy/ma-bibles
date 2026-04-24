@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useFavorites } from '../../src/hooks/useFavorites';
 import { useLanguage } from '../../src/context/LanguageContext';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 type TabType = 'all' | 'recent' | 'category';
@@ -30,9 +30,16 @@ const FavoriteCard = React.memo(({ item, onPress, onLongPress, t }: any) => {
 
 export default function FavoritesScreen() {
   const { t } = useLanguage();
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, reloadFavorites } = useFavorites();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('all');
+
+  // Recharger les favoris à chaque fois que l'écran devient visible
+  useFocusEffect(
+    useCallback(() => {
+      reloadFavorites();
+    }, [reloadFavorites])
+  );
 
   const handleRemove = useCallback((id: string) => {
     Alert.alert(t('remove_confirm'), '', [

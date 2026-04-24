@@ -8,47 +8,53 @@ export function useFavorites() {
   const [favorites, setFavorites] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadFavorites();
-  }, []);
-
   const loadFavorites = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) setFavorites(parsed);
+        else setFavorites([]);
+      } else {
+        setFavorites([]);
       }
     } catch (error) {
       console.error('Erreur chargement favoris', error);
+      setFavorites([]);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
   const saveFavorites = async (newFavorites: Bookmark[]) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newFavorites));
-      setFavorites(newFavorites);
-    } catch (error) {
-      console.error('Erreur sauvegarde favoris', error);
-    }
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newFavorites));
+    setFavorites(newFavorites);
   };
 
-  // Accepte un objet Bookmark complet
-  const addFavorite = (bookmark: Bookmark) => {
+  const addFavorite = async (bookmark: Bookmark): Promise<boolean> => {
     const exists = favorites.some(f => f.id === bookmark.id);
     if (!exists) {
-      saveFavorites([...favorites, bookmark]);
+      await saveFavorites([...favorites, bookmark]);
+      return true;
     }
+    return false;
   };
 
-  const removeFavorite = (idOrRef: string) => {
-    saveFavorites(favorites.filter(f => f.id !== idOrRef));
+  const removeFavorite = async (idOrRef: string) => {
+    const newFavs = favorites.filter(f => f.id !== idOrRef);
+    await saveFavorites(newFavs);
   };
 
   const isFavorite = (verseRef: string): boolean => {
     return favorites.some(f => f.id === verseRef);
+  };
+
+  const reloadFavorites = () => {
+    loadFavorites();
   };
 
   return {
@@ -57,5 +63,6 @@ export function useFavorites() {
     addFavorite,
     removeFavorite,
     isFavorite,
+    reloadFavorites,
   };
 }
