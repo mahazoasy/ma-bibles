@@ -18,7 +18,7 @@ const fixedFr = fixVerses(bibleFr);
 fs.writeFileSync('assets/bible_fr.json', JSON.stringify(fixedFr, null, 2));
 console.log('bible_fr.json corrigé');
 
-// Corriger bible_mg.json (s'il existe)
+// Corriger bible_mg.json 
 if (fs.existsSync('assets/bible_mg.json')) {
   const bibleMg = JSON.parse(fs.readFileSync('assets/bible_mg.json', 'utf8'));
   const fixedMg = fixVerses(bibleMg);

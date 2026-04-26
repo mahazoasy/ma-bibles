@@ -94,7 +94,7 @@ for (const file of files) {
   const baseName = path.basename(file, '.json');
   const mgName = bookNameMgMap[baseName];
   if (!mgName) {
-    console.warn(`⚠️ Nom de livre inconnu pour ${file}, ignoré.`);
+    console.warn(` Nom de livre inconnu pour ${file}, ignoré.`);
     continue;
   }
 
@@ -136,4 +136,4 @@ bible.livres.sort((a, b) => {
 
 const outputPath = path.join(__dirname, 'assets', 'bible_mg.json');
 fs.writeFileSync(outputPath, JSON.stringify(bible, null, 2), 'utf8');
-console.log(`✅ Bible malgache fusionnée (${bible.livres.length} livres) → ${outputPath}`);
+console.log(`Bible malgache fusionnée (${bible.livres.length} livres) → ${outputPath}`);

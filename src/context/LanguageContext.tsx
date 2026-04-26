@@ -21,7 +21,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites": "Favoris",
     // Accueil
     "verse_of_day": "📖 Verset du jour",
-    "resume_reading": "📌 Reprendre la lecture",
+    "resume_reading": " Reprendre la lecture",
     "resume_hint": "Appuyez pour continuer",
     "old_testament": "Ancien Testament",
     "new_testament": "Nouveau Testament",
@@ -69,7 +69,7 @@ const translations: Record<Language, Record<string, string>> = {
     "search": "Hikaroka",
     "favorites": "Tiany",
     "verse_of_day": "📖 Andininy androany",
-    "resume_reading": "📌 Hanohy famakiana",
+    "resume_reading": " Hanohy famakiana",
     "resume_hint": "Tsindrio hanohy",
     "old_testament": "Fanekena Taloha",
     "new_testament": "Fanekena Vaovao",
